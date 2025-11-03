@@ -1,4 +1,5 @@
 import pygame
+import time
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -12,7 +13,13 @@ class Player(pygame.sprite.Sprite):
         self.gravity = 0.5
         self.jump_power = -12
         self.on_ground = False
-        self.alive = True
+
+        # Sistema de vidas
+        self.max_lives = 5
+        self.lives = self.max_lives
+        self.invincible = False
+        self.invincible_time = 3  # segundos
+        self.last_hit_time = 0
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -29,18 +36,16 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.vel_y
 
     def update(self, platforms, hazards):
-        if not self.alive:
-            return
         self.handle_input()
         self.apply_gravity()
         self.check_collision(platforms)
         self.check_hazards(hazards)
+        self.update_invincibility()
 
     def check_collision(self, platforms):
         self.on_ground = False
         for plat in platforms:
             if self.rect.colliderect(plat):
-                # si cae sobre la plataforma
                 if self.vel_y > 0 and self.rect.bottom <= plat.bottom:
                     self.rect.bottom = plat.top
                     self.vel_y = 0
@@ -49,5 +54,20 @@ class Player(pygame.sprite.Sprite):
     def check_hazards(self, hazards):
         for h in hazards:
             if self.rect.colliderect(h):
+                self.take_damage()
+
+    def take_damage(self):
+        current_time = time.time()
+        if not self.invincible and self.lives > 0:
+            self.lives -= 1
+            self.invincible = True
+            self.last_hit_time = current_time
+            print(f"💀 Has recibido daño! Vidas restantes: {self.lives}")
+            if self.lives <= 0:
                 self.alive = False
-                print("💀 Has muerto")
+                print("☠️ ¡GAME OVER!")
+
+    def update_invincibility(self):
+        if self.invincible:
+            if time.time() - self.last_hit_time >= self.invincible_time:
+                self.invincible = False
