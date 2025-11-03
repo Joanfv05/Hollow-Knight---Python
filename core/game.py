@@ -1,10 +1,12 @@
 import pygame
 from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
+from core.camera import Camera
 import random
 
 class Game:
     def __init__(self):
+        self.camera = Camera(WIDTH, HEIGHT)
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -53,6 +55,7 @@ class Game:
     def update(self):
         self.all_sprites.update(self.platforms, self.hazards)
         self.update_falling_objects()
+        self.camera.update(self.player) 
 
     def update_falling_objects(self):
         for i, obj in enumerate(self.falling_objects):
@@ -65,24 +68,26 @@ class Game:
                 for plat in self.platforms:
                     if obj.colliderect(plat):
                         obj.y = plat.top - obj.height
+                        # detener caída del objeto
                         self.falling_speed = 0
 
     def draw(self):
-        self.screen.fill((30, 30, 30))
+        self.screen.fill((30, 30, 30))  # fondo oscuro (cueva)
 
-        # dibujar plataformas
+        # dibujar plataformas con cámara
         for plat in self.platforms:
-            pygame.draw.rect(self.screen, (150, 75, 0), plat)
+            pygame.draw.rect(self.screen, (150, 75, 0), self.camera.apply(plat))
 
         # dibujar pinchos
         for h in self.hazards:
-            pygame.draw.rect(self.screen, (255, 0, 0), h)
+            pygame.draw.rect(self.screen, (255, 0, 0), self.camera.apply(h))
 
         # dibujar objetos que caen
         for obj in self.falling_objects:
-            pygame.draw.rect(self.screen, (255, 255, 0), obj)
+            pygame.draw.rect(self.screen, (255, 255, 0), self.camera.apply(obj))
 
         # dibujar jugador
-        self.all_sprites.draw(self.screen)
+        for sprite in self.all_sprites:
+            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
         pygame.display.flip()
