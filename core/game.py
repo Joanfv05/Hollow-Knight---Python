@@ -25,6 +25,16 @@ class Game:
         self.object_triggered = self.level.object_triggered
         self.walls = self.level.walls
 
+        # Jugador: colocar sobre la primera plataforma cercana
+        start_x = 100  # coordenada X inicial del jugador
+        start_y = 0
+        for plat in self.platforms:
+            if plat.left <= start_x <= plat.right:
+                start_y = plat.top - 50  # coloca el jugador encima de la plataforma
+                break
+        self.player = Player(start_x, start_y)
+        self.all_sprites = pygame.sprite.Group(self.player)
+
     def run(self):
         while self.running:
             self.clock.tick(FPS)

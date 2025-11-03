@@ -2,39 +2,33 @@ import pygame
 
 class Level:
     def __init__(self):
-        # Plataformas principales
-        self.platforms = [
-            pygame.Rect(0, 500, 500, 40),
-            pygame.Rect(550, 500, 500, 40),
-            pygame.Rect(1100, 450, 200, 20),
-            pygame.Rect(1150, 400, 150, 20),
-            pygame.Rect(1200, 350, 100, 20),
-            pygame.Rect(1250, 300, 100, 20),
-            pygame.Rect(1300, 250, 150, 20),
-            pygame.Rect(1450, 250, 250, 20)
-        ]
+        self.platforms = []
+        self.hazards = []
+        self.walls = []
+        self.falling_objects = []
 
-        # Pinchos
-        self.hazards = [
-            pygame.Rect(400, 480, 50, 20),
-            pygame.Rect(600, 480, 50, 20),
-            pygame.Rect(1250, 280, 50, 20),
-            pygame.Rect(1550, 230, 100, 20)
-        ]
+        # --- Gran plataforma para moverse ---
+        self.platforms.append(pygame.Rect(0, 500, 1500, 40))  # gran suelo
 
-        # Objetos que caen
-        self.falling_objects = [
-            pygame.Rect(1150, 350, 30, 30),
-            pygame.Rect(1250, 250, 30, 30),
-            pygame.Rect(1400, 200, 30, 30)
-        ]
+        # --- Objetos que caen ---
+        # Colocados estratégicamente sobre la plataforma
+        for i in range(5):
+            x = 200 + i*250
+            y = 50  # empiezan desde arriba
+            self.falling_objects.append(pygame.Rect(x, y, 30, 30))
+
+        # Trigger de caída
         self.object_triggered = [False] * len(self.falling_objects)
         self.falling_speed = 5
 
-        # Paredes
-        self.walls = [
-            pygame.Rect(0, 0, 50, 600),
-            pygame.Rect(1800, 0, 50, 600),
-            pygame.Rect(50, 0, 10, 500),
-            pygame.Rect(1100, 0, 10, 500)
-        ]
+    def draw(self, screen):
+        # Color marrón para plataforma y objetos
+        color_platform = (200, 100, 0)
+
+        # Dibujar plataforma
+        for p in self.platforms:
+            pygame.draw.rect(screen, color_platform, p)
+
+        # Dibujar objetos que caen (mismo color marrón)
+        for obj in self.falling_objects:
+            pygame.draw.rect(screen, color_platform, obj)
