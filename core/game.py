@@ -1,5 +1,7 @@
 import pygame
 from settings import WIDTH, HEIGHT, FPS, TITLE
+from entities.player import Player
+import random
 
 class Game:
     def __init__(self):
@@ -7,8 +9,34 @@ class Game:
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
-        self.player_pos = [WIDTH//2, HEIGHT//2]
-        self.speed = 5
+
+        # Jugador
+        self.player = Player(100, 400)
+        self.all_sprites = pygame.sprite.Group()
+        self.all_sprites.add(self.player)
+
+        # Plataformas: rectángulos (x, y, ancho, alto)
+        self.platforms = [
+            pygame.Rect(0, 500, 400, 40),     # suelo principal
+            pygame.Rect(450, 450, 200, 20),   # plataforma pequeña
+            pygame.Rect(700, 400, 200, 20),   # plataforma más alta
+            pygame.Rect(950, 350, 150, 20),   # subida izquierda
+            pygame.Rect(1100, 300, 200, 20)   # final alto
+        ]
+
+        # Pinchos
+        self.hazards = [
+            pygame.Rect(350, 480, 50, 20),  # pincho en suelo
+            pygame.Rect(750, 380, 50, 20)
+        ]
+
+        # Objetos que caen
+        self.falling_objects = [
+            pygame.Rect(500, 0, 30, 30),
+            pygame.Rect(900, 0, 30, 30)
+        ]
+        self.falling_speed = 5
+        self.object_triggered = [False, False]  # solo caen cuando jugador pasa cerca
 
     def run(self):
         while self.running:
@@ -23,18 +51,38 @@ class Game:
                 self.running = False
 
     def update(self):
-        keys = pygame.key.get_pressed()
-        # Movimiento con WASD
-        if keys[pygame.K_a]:  # izquierda
-            self.player_pos[0] -= self.speed
-        if keys[pygame.K_d]:  # derecha
-            self.player_pos[0] += self.speed
-        if keys[pygame.K_w]:  # arriba
-            self.player_pos[1] -= self.speed
-        if keys[pygame.K_s]:  # abajo
-            self.player_pos[1] += self.speed
+        self.all_sprites.update(self.platforms, self.hazards)
+        self.update_falling_objects()
+
+    def update_falling_objects(self):
+        for i, obj in enumerate(self.falling_objects):
+            # activar caída cuando jugador pasa cerca
+            if not self.object_triggered[i] and self.player.rect.x > obj.x - 100:
+                self.object_triggered[i] = True
+            if self.object_triggered[i]:
+                obj.y += self.falling_speed
+                # colisión con plataformas
+                for plat in self.platforms:
+                    if obj.colliderect(plat):
+                        obj.y = plat.top - obj.height
+                        self.falling_speed = 0
 
     def draw(self):
         self.screen.fill((30, 30, 30))
-        pygame.draw.rect(self.screen, (200, 200, 255), (*self.player_pos, 50, 50))
+
+        # dibujar plataformas
+        for plat in self.platforms:
+            pygame.draw.rect(self.screen, (150, 75, 0), plat)
+
+        # dibujar pinchos
+        for h in self.hazards:
+            pygame.draw.rect(self.screen, (255, 0, 0), h)
+
+        # dibujar objetos que caen
+        for obj in self.falling_objects:
+            pygame.draw.rect(self.screen, (255, 255, 0), obj)
+
+        # dibujar jugador
+        self.all_sprites.draw(self.screen)
+
         pygame.display.flip()
