@@ -1,38 +1,42 @@
 import pygame
 from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
-from core.camera import Camera
 from core.level import Level
+from core.camera import Camera
 
 class Game:
     def __init__(self):
         pygame.font.init()
 
-        # Ventana normal (ajústala si quieres pantalla completa)
+        # Ventana
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
-
         self.clock = pygame.time.Clock()
         self.running = True
-
-        # Cámara
-        self.camera = Camera(WIDTH, HEIGHT)
 
         # Nivel
         self.level = Level()
         self.platforms = self.level.platforms
-        self.hazards = self.level.hazards
-        self.walls = self.level.walls
 
-        # Jugador
+        # Dimensiones del nivel
+        self.level_width = 1000
+        self.level_height = 600
+
+        # Cámara
+        self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
+
+        # Jugador (posición inicial)
         start_x = 100
-        start_y = 0
-        for plat in self.platforms:
-            if plat.left <= start_x <= plat.right:
-                start_y = plat.top - 50
-                break
+        start_y = self.level_height - 100  # Aparece sobre el suelo visible
+
         self.player = Player(start_x, start_y)
         self.all_sprites = pygame.sprite.Group(self.player)
+
+        # Si el sprite no tiene imagen, creamos una por defecto
+        if not hasattr(self.player, "image") or self.player.image is None:
+            self.player.image = pygame.Surface((40, 60))
+            self.player.image.fill((200, 200, 255))
+            self.player.rect = self.player.image.get_rect(topleft=(start_x, start_y))
 
     def run(self):
         while self.running:
@@ -45,17 +49,16 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.running = False
 
     def update(self):
         if not self.player.alive:
             return
 
         self.player.update_invincibility()
-        self.all_sprites.update(self.platforms, self.hazards)
-        self.camera.update(self.player, self.level.level_width, self.level.level_height)
+        self.all_sprites.update(self.platforms, [])
+        self.camera.update(self.player)
 
     def draw_lives(self):
         mask_width = 30
@@ -70,27 +73,18 @@ class Game:
             pygame.draw.rect(self.screen, color, (x, y_start, mask_width, mask_height))
 
     def draw(self):
-        self.screen.fill((25, 25, 35))  # Fondo más oscuro tipo cueva
+        self.screen.fill((25, 25, 35))  # Fondo tipo cueva
 
-        # Paredes
-        for wall in self.walls:
-            pygame.draw.rect(self.screen, (60, 60, 60), self.camera.apply(wall))
-
-        # Plataformas con variaciones de color
+        # Plataformas
         for plat in self.platforms:
             pygame.draw.rect(self.screen, (130, 70, 0), self.camera.apply(plat))
-            pygame.draw.rect(self.screen, (100, 50, 0), self.camera.apply(plat.inflate(-6, -6)))  # borde interior
-
-        # Pinchos (detallados con colores)
-        for h in self.hazards:
-            pygame.draw.rect(self.screen, (255, 30, 30), self.camera.apply(h))
-            pygame.draw.rect(self.screen, (180, 0, 0), self.camera.apply(h.inflate(-4, -4)))  # sombreado interior
+            pygame.draw.rect(self.screen, (100, 50, 0), self.camera.apply(plat.inflate(-6, -6)))
 
         # Jugador
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
-        # HUD (vidas)
+        # HUD
         self.draw_lives()
 
         # Game Over
@@ -101,3 +95,6 @@ class Game:
             self.screen.blit(text, rect)
 
         pygame.display.flip()
+
+
+__all__ = ["Game"]

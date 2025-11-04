@@ -25,10 +25,11 @@ class Player(pygame.sprite.Sprite):
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
+        self.dx = 0
         if keys[pygame.K_a]:
-            self.rect.x -= self.speed
+            self.dx = -self.speed
         if keys[pygame.K_d]:
-            self.rect.x += self.speed
+            self.dx = self.speed
         if keys[pygame.K_SPACE] and self.on_ground:
             self.vel_y = self.jump_power
             self.on_ground = False
@@ -44,39 +45,36 @@ class Player(pygame.sprite.Sprite):
 
         self.handle_input()
         self.apply_gravity()
-        self.check_collision(platforms)
+
+        # Movimiento horizontal
+        self.rect.x += self.dx
+        self.collide(platforms, "x")
+
+        # Movimiento vertical
+        self.rect.y += self.vel_y
+        self.collide(platforms, "y")
+
         self.check_hazards(hazards)
         self.update_invincibility()
 
-    def check_collision(self, platforms):
+    def collide(self, platforms, direction):
+        """Colisión sólida con paredes, techo y suelo."""
         self.on_ground = False
-
-        # Colisión horizontal
         for plat in platforms:
             if self.rect.colliderect(plat):
-                if self.vel_y == 0:
-                    if self.rect.right > plat.left and self.rect.left < plat.left:
+                if direction == "x":
+                    if self.dx > 0:  # moviendo derecha
                         self.rect.right = plat.left
-                    elif self.rect.left < plat.right and self.rect.right > plat.right:
+                    elif self.dx < 0:  # moviendo izquierda
                         self.rect.left = plat.right
-
-        # Colisión vertical
-        self.rect.y += self.vel_y
-        for plat in platforms:
-            if self.rect.colliderect(plat):
-                if self.vel_y > 0:  # cayendo
-                    self.rect.bottom = plat.top
-                    self.vel_y = 0
-                    self.on_ground = True
-                elif self.vel_y < 0:  # subiendo
-                    self.rect.top = plat.bottom
-                    self.vel_y = 0
-
-        # Limite inferior de la pantalla
-        if self.rect.bottom > 600:  # ajusta según el alto de tu ventana
-            self.rect.bottom = 600
-            self.vel_y = 0
-            self.on_ground = True
+                elif direction == "y":
+                    if self.vel_y > 0:  # cayendo
+                        self.rect.bottom = plat.top
+                        self.vel_y = 0
+                        self.on_ground = True
+                    elif self.vel_y < 0:  # subiendo
+                        self.rect.top = plat.bottom
+                        self.vel_y = 0
 
     def check_hazards(self, hazards):
         for h in hazards:
@@ -95,6 +93,5 @@ class Player(pygame.sprite.Sprite):
                 print("☠️ ¡GAME OVER!")
 
     def update_invincibility(self):
-        if self.invincible:
-            if time.time() - self.last_hit_time >= self.invincible_time:
-                self.invincible = False
+        if self.invincible and (time.time() - self.last_hit_time >= self.invincible_time):
+            self.invincible = False
