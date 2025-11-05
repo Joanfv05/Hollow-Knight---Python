@@ -22,21 +22,14 @@ class Game:
         self.level_width = 1000
         self.level_height = 600
 
-        # Cámara
+        # Cámara (aunque estática)
         self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
 
-        # Jugador (posición inicial)
+        # Jugador
         start_x = 100
-        start_y = self.level_height - 100  # Aparece sobre el suelo visible
-
+        start_y = self.level_height - 100
         self.player = Player(start_x, start_y)
         self.all_sprites = pygame.sprite.Group(self.player)
-
-        # Si el sprite no tiene imagen, creamos una por defecto
-        if not hasattr(self.player, "image") or self.player.image is None:
-            self.player.image = pygame.Surface((40, 60))
-            self.player.image.fill((200, 200, 255))
-            self.player.rect = self.player.image.get_rect(topleft=(start_x, start_y))
 
     def run(self):
         while self.running:
@@ -56,8 +49,8 @@ class Game:
         if not self.player.alive:
             return
 
-        self.player.update_invincibility()
-        self.all_sprites.update(self.platforms, [])
+        # Actualiza jugador y cámara
+        self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
     def draw_lives(self):
@@ -73,18 +66,17 @@ class Game:
             pygame.draw.rect(self.screen, color, (x, y_start, mask_width, mask_height))
 
     def draw(self):
-        self.screen.fill((25, 25, 35))  # Fondo tipo cueva
+        self.screen.fill((25, 25, 35))
 
         # Plataformas
         for plat in self.platforms:
-            pygame.draw.rect(self.screen, (130, 70, 0), self.camera.apply(plat))
-            pygame.draw.rect(self.screen, (100, 50, 0), self.camera.apply(plat.inflate(-6, -6)))
+            pygame.draw.rect(self.screen, (130, 70, 0), plat)
+            pygame.draw.rect(self.screen, (100, 50, 0), plat.inflate(-6, -6))
 
-        # Jugador
-        for sprite in self.all_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+        # 🔥 Dibujar jugador + espada (usa su método propio)
+        self.player.draw(self.screen)
 
-        # HUD
+        # HUD de vidas
         self.draw_lives()
 
         # Game Over
