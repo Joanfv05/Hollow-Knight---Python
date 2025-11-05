@@ -97,9 +97,10 @@ class Player(pygame.sprite.Sprite):
             self.sword_origin = (self.rect.centerx, self.rect.top - 5)
 
         elif self.facing == "down":
-            # Empieza derecha (45°) → termina izquierda (135°)
-            self.attack_start_angle = 45
-            self.attack_sweep = 90
+            # Barrido completo de 180° por debajo del personaje
+            # Empieza abajo-izquierda (180°) → termina abajo-derecha (0°)
+            self.attack_start_angle = 180
+            self.attack_sweep = -180
             self.sword_origin = (self.rect.centerx, self.rect.bottom + 5)
 
         # Inicializamos el ángulo visual inmediato
@@ -116,6 +117,16 @@ class Player(pygame.sprite.Sprite):
         if progress >= 1:
             self.attacking = False
             return
+
+        # Recalcular el origen dinámicamente según la posición actual del jugador
+        if self.facing == "right":
+            self.sword_origin = (self.rect.right + 5, self.rect.centery)
+        elif self.facing == "left":
+            self.sword_origin = (self.rect.left - 5, self.rect.centery)
+        elif self.facing == "up":
+            self.sword_origin = (self.rect.centerx, self.rect.top - 5)
+        elif self.facing == "down":
+            self.sword_origin = (self.rect.centerx, self.rect.bottom + 5)
 
         # Ángulo según start + progress * sweep
         self.sword_angle = self.attack_start_angle + progress * self.attack_sweep
