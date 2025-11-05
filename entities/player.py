@@ -20,10 +20,13 @@ class Player(pygame.sprite.Sprite):
         # Dirección principal
         self.facing = "right"  # "right", "left", "up", "down"
 
-        # Espada
+        # Espada / ataque
         self.attacking = False
         self.attack_time = 0
         self.attack_duration = 250  # ms
+        self.attack_start_angle = 0
+        self.attack_sweep = 0
+
         self.sword_length = 45
         self.sword_width = 10
         self.sword_image = pygame.Surface(
@@ -69,22 +72,40 @@ class Player(pygame.sprite.Sprite):
             self.start_attack()
 
     def start_attack(self):
-        """Empieza ataque según dirección."""
+        """Empieza ataque según dirección (empieza arriba y baja)."""
         self.attacking = True
         self.attack_time = pygame.time.get_ticks()
 
+        # Movimiento descendente en espejo
         if self.facing == "right":
-            self.sword_angle = -90
+            # Empieza arriba (-45°) → termina abajo (+45°)
+            self.attack_start_angle = -45
+            self.attack_sweep = 90
             self.sword_origin = (self.rect.right + 5, self.rect.centery)
+
         elif self.facing == "left":
-            self.sword_angle = -90
-            self.sword_origin = (self.rect.left - 10, self.rect.centery)  # CORRECCIÓN
+            # Empieza arriba (225°) → termina abajo (135°)
+            self.attack_start_angle = 225
+            self.attack_sweep = -90
+            self.sword_origin = (self.rect.left - 5, self.rect.centery)
+
         elif self.facing == "up":
-            self.sword_angle = -90
-            self.sword_origin = (self.rect.left, self.rect.top - 5)
+            # Barrido completo de 180° por encima del personaje
+            # Empieza arriba-izquierda (-180°) → termina arriba-derecha (0°)
+            self.attack_start_angle = -180
+            self.attack_sweep = 180
+            self.sword_origin = (self.rect.centerx, self.rect.top - 5)
+
         elif self.facing == "down":
-            self.sword_angle = 0
+            # Empieza derecha (45°) → termina izquierda (135°)
+            self.attack_start_angle = 45
+            self.attack_sweep = 90
             self.sword_origin = (self.rect.centerx, self.rect.bottom + 5)
+
+        # Inicializamos el ángulo visual inmediato
+        self.sword_angle = self.attack_start_angle
+        self.sword_rotated = pygame.transform.rotate(self.sword_image, -self.sword_angle)
+        self.sword_rect = self.sword_rotated.get_rect(center=self.sword_origin)
 
     def update_attack(self, platforms):
         if not self.attacking:
@@ -96,32 +117,18 @@ class Player(pygame.sprite.Sprite):
             self.attacking = False
             return
 
-        # Determinar ángulo según dirección y progreso
-        if self.facing == "right":
-            self.sword_angle = -90 + progress * 90
-        elif self.facing == "left":
-            self.sword_angle = -90 - progress * 90
-        elif self.facing == "up":
-            self.sword_angle = -90 + progress * 90
-        elif self.facing == "down":
-            self.sword_angle = 0 + progress * 90
+        # Ángulo según start + progress * sweep
+        self.sword_angle = self.attack_start_angle + progress * self.attack_sweep
 
         # Rotar espada
         self.sword_rotated = pygame.transform.rotate(self.sword_image, -self.sword_angle)
 
         # Posicionar extremo de la espada
-        radius = 40
+        radius = self.sword_length + 5
         cx, cy = self.sword_origin
         offset_x = math.cos(math.radians(self.sword_angle)) * radius
         offset_y = math.sin(math.radians(self.sword_angle)) * radius
-
-        if self.facing == "right" or self.facing == "up":
-            sx = cx + offset_x
-        elif self.facing == "left":
-            sx = cx - offset_x
-        else:  # down
-            sx = cx + offset_x
-
+        sx = cx + offset_x
         sy = cy + offset_y
 
         self.sword_rect = self.sword_rotated.get_rect(center=(sx, sy))
