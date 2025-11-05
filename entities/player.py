@@ -42,7 +42,7 @@ class Player(pygame.sprite.Sprite):
         self.max_lives = 5
         self.lives = self.max_lives
         self.invincible = False
-        self.invincible_time = 3
+        self.invincible_time = 1
         self.last_hit_time = 0
         self.alive = True
 

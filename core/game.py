@@ -53,28 +53,47 @@ class Game:
         self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
-        # ⚠️ Colisión con pinchos
+       # ⚠️ Colisión con pinchos (respeta inmunidad)
         for spike in self.level.spikes:
             if self.player.rect.colliderect(spike):
-                self.player.lives -= 1
-                if self.player.lives <= 0:
-                    self.player.alive = False
-                else:
-                    # Pequeño empuje o rebote hacia atrás
+                # Solo recibe daño si no está invencible
+                if not self.player.invincible:
+                    self.player.take_damage()
+                    # Rebote hacia atrás o pequeño impulso
                     self.player.rect.y -= 20
                 break
 
     def draw_lives(self):
-        mask_width = 30
-        mask_height = 30
-        padding = 5
-        x_start = 10
-        y_start = 10
+        mask_size = 25
+        padding = 10
+        x_start = 15
+        y_start = 7
 
         for i in range(self.player.max_lives):
-            x = x_start + i * (mask_width + padding)
-            color = (255, 255, 0) if i < self.player.lives else (50, 50, 50)
-            pygame.draw.rect(self.screen, color, (x, y_start, mask_width, mask_height))
+            x = x_start + i * (mask_size + padding)
+
+            # Color: rojo si está viva, gris si perdida
+            if i < self.player.lives:
+                color = (255, 0, 0)
+            else:
+                color = (70, 70, 70)
+
+            # Dibuja corazón (dos círculos + triángulo)
+            center_left = (x + mask_size * 0.3, y_start + mask_size * 0.35)
+            center_right = (x + mask_size * 0.7, y_start + mask_size * 0.35)
+            radius = mask_size * 0.3
+
+            # Parte superior redondeada
+            pygame.draw.circle(self.screen, color, center_left, radius)
+            pygame.draw.circle(self.screen, color, center_right, radius)
+
+            # Parte inferior en punta
+            points = [
+                (x, y_start + mask_size * 0.4),
+                (x + mask_size, y_start + mask_size * 0.4),
+                (x + mask_size / 2, y_start + mask_size),
+            ]
+            pygame.draw.polygon(self.screen, color, points)
 
     def draw(self):
         self.screen.fill((25, 25, 35))
