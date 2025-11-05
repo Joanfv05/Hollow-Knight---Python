@@ -78,15 +78,15 @@ class Player(pygame.sprite.Sprite):
 
         # Movimiento descendente en espejo
         if self.facing == "right":
-            # Empieza arriba (-45°) → termina abajo (+45°)
-            self.attack_start_angle = -45
-            self.attack_sweep = 90
+            # Empieza arriba (-90°) → termina abajo (+90°)
+            self.attack_start_angle = -90
+            self.attack_sweep = 180
             self.sword_origin = (self.rect.right + 5, self.rect.centery)
 
         elif self.facing == "left":
-            # Empieza arriba (225°) → termina abajo (135°)
-            self.attack_start_angle = 225
-            self.attack_sweep = -90
+            # Empieza arriba (270°) → termina abajo (90°)
+            self.attack_start_angle = 270
+            self.attack_sweep = -180
             self.sword_origin = (self.rect.left - 5, self.rect.centery)
 
         elif self.facing == "up":

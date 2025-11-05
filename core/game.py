@@ -53,6 +53,17 @@ class Game:
         self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
+        # ⚠️ Colisión con pinchos
+        for spike in self.level.spikes:
+            if self.player.rect.colliderect(spike):
+                self.player.lives -= 1
+                if self.player.lives <= 0:
+                    self.player.alive = False
+                else:
+                    # Pequeño empuje o rebote hacia atrás
+                    self.player.rect.y -= 20
+                break
+
     def draw_lives(self):
         mask_width = 30
         mask_height = 30
@@ -68,12 +79,10 @@ class Game:
     def draw(self):
         self.screen.fill((25, 25, 35))
 
-        # Plataformas
-        for plat in self.platforms:
-            pygame.draw.rect(self.screen, (130, 70, 0), plat)
-            pygame.draw.rect(self.screen, (100, 50, 0), plat.inflate(-6, -6))
+        # Dibuja el nivel completo (plataformas + pinchos + fondo)
+        self.level.draw(self.screen)
 
-        # 🔥 Dibujar jugador + espada (usa su método propio)
+        # Dibujar jugador + espada (usa su método propio)
         self.player.draw(self.screen)
 
         # HUD de vidas
