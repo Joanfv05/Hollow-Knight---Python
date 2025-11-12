@@ -23,11 +23,19 @@ class Game:
         self.level_width = 1000
         self.level_height = 600
 
-        #Enemigos
+        # Enemigos
         import random
         platform = random.choice(self.level.platforms[4:])  # evita paredes y suelo
-        x = random.randint(platform.left + 20, platform.right - 70)
+
+        # ✅ FIX → comprobamos que el rango sea válido antes de usar randint
+        left_limit = platform.left + 20
+        right_limit = platform.right - 70
+        if right_limit <= left_limit:
+            x = platform.centerx  # usa el centro si la plataforma es estrecha
+        else:
+            x = random.randint(left_limit, right_limit)
         y = platform.top - 70
+
         self.enemy = Guardia1(x, y, self.level)
 
         # Cámara (aunque estática)
@@ -61,7 +69,7 @@ class Game:
         self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
-       # ⚠️ Colisión con pinchos (respeta inmunidad)
+        # ⚠️ Colisión con pinchos (respeta inmunidad)
         for spike in self.level.spikes:
             if self.player.rect.colliderect(spike):
                 # Solo recibe daño si no está invencible
@@ -70,9 +78,9 @@ class Game:
                     # Rebote hacia atrás o pequeño impulso
                     self.player.rect.y -= 20
                 break
+
         self.enemy.update(self.player, self.level)
         self.enemy.draw(self.screen)
-
 
     def draw_lives(self):
         mask_size = 25
