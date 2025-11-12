@@ -3,7 +3,7 @@ from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
 from core.level import Level
 from core.camera import Camera
-from entities.guardia1 import Guardia1
+from entities.guardia1 import Guardia1  # clase actualizada
 
 class Game:
     def __init__(self):
@@ -20,23 +20,11 @@ class Game:
         self.platforms = self.level.platforms
 
         # Dimensiones del nivel
-        self.level_width = 1000
-        self.level_height = 600
+        self.level_width = WIDTH
+        self.level_height = HEIGHT
 
-        # Enemigos
-        import random
-        platform = random.choice(self.level.platforms[4:])  # evita paredes y suelo
-
-        # ✅ FIX → comprobamos que el rango sea válido antes de usar randint
-        left_limit = platform.left + 20
-        right_limit = platform.right - 70
-        if right_limit <= left_limit:
-            x = platform.centerx  # usa el centro si la plataforma es estrecha
-        else:
-            x = random.randint(left_limit, right_limit)
-        y = platform.top - 70
-
-        self.enemy = Guardia1(x, y, self.level)
+        # Enemigo: Guardia1 sobre plataforma fija
+        self.enemy = Guardia1(self.level)
 
         # Cámara (aunque estática)
         self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
@@ -69,18 +57,16 @@ class Game:
         self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
-        # ⚠️ Colisión con pinchos (respeta inmunidad)
+        # Colisión con pinchos (respeta inmunidad)
         for spike in self.level.spikes:
             if self.player.rect.colliderect(spike):
-                # Solo recibe daño si no está invencible
                 if not self.player.invincible:
                     self.player.take_damage()
-                    # Rebote hacia atrás o pequeño impulso
                     self.player.rect.y -= 20
                 break
 
+        # Actualizar enemigo
         self.enemy.update(self.player, self.level)
-        self.enemy.draw(self.screen)
 
     def draw_lives(self):
         mask_size = 25
@@ -90,23 +76,15 @@ class Game:
 
         for i in range(self.player.max_lives):
             x = x_start + i * (mask_size + padding)
+            color = (255, 0, 0) if i < self.player.lives else (70, 70, 70)
 
-            # Color: rojo si está viva, gris si perdida
-            if i < self.player.lives:
-                color = (255, 0, 0)
-            else:
-                color = (70, 70, 70)
-
-            # Dibuja corazón (dos círculos + triángulo)
             center_left = (x + mask_size * 0.3, y_start + mask_size * 0.35)
             center_right = (x + mask_size * 0.7, y_start + mask_size * 0.35)
             radius = mask_size * 0.3
 
-            # Parte superior redondeada
             pygame.draw.circle(self.screen, color, center_left, radius)
             pygame.draw.circle(self.screen, color, center_right, radius)
 
-            # Parte inferior en punta
             points = [
                 (x, y_start + mask_size * 0.4),
                 (x + mask_size, y_start + mask_size * 0.4),
@@ -117,13 +95,13 @@ class Game:
     def draw(self):
         self.screen.fill((25, 25, 35))
 
-        # Dibuja el nivel completo (plataformas + pinchos + fondo)
+        # Dibujar nivel
         self.level.draw(self.screen)
 
-        # Dibujar jugador + espada (usa su método propio)
+        # Dibujar jugador
         self.player.draw(self.screen)
 
-        # Dibujar Enemigo + espada
+        # Dibujar enemigo
         self.enemy.draw(self.screen)
 
         # HUD de vidas

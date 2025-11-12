@@ -20,13 +20,15 @@ class Daga(pygame.sprite.Sprite):
 
 
 class Guardia1(pygame.sprite.Sprite):
-    def __init__(self, x, y, level):
+    def __init__(self, level):
         super().__init__()
 
         # === Atributos principales ===
         self.image = pygame.Surface((50, 70))
         self.image.fill((180, 40, 40))
-        self.rect = self.image.get_rect(topleft=(x, y))
+        # Posicionar al guardia sobre la plataforma fija
+        platform_rect = pygame.Rect(130, 326, 275, 20)
+        self.rect = self.image.get_rect(midbottom=(platform_rect.centerx, platform_rect.top))
 
         self.speed = 1.5
         self.direction = 1
@@ -35,28 +37,11 @@ class Guardia1(pygame.sprite.Sprite):
         self.detection_range = 300
         self.alive = True
 
-        self.platform = None
+        # Plataforma fija
+        self.platform = platform_rect
+
+        # Grupo de dagas
         self.dagas = pygame.sprite.Group()
-
-    def get_platform_below(self, level):
-        """Devuelve la plataforma justo debajo del enemigo."""
-        feet_x = self.rect.centerx
-        feet_y = self.rect.bottom + 2
-        for plat in level.platforms:
-            if plat.left <= feet_x <= plat.right and plat.top <= feet_y <= plat.bottom + 10:
-                return plat
-        return None
-
-    def check_platform_edges(self, level):
-        """Devuelve True si hay suelo bajo los pies."""
-        # Detectar suelo bajo cada pie
-        left_foot = (self.rect.left + 5, self.rect.bottom + 4)
-        right_foot = (self.rect.right - 5, self.rect.bottom + 4)
-
-        on_left = any(p.collidepoint(left_foot) for p in level.platforms)
-        on_right = any(p.collidepoint(right_foot) for p in level.platforms)
-
-        return on_left, on_right
 
     def update(self, player, level):
         if not self.alive:
@@ -72,30 +57,21 @@ class Guardia1(pygame.sprite.Sprite):
             self.direction = 1 if player.rect.centerx > self.rect.centerx else -1
             self.shoot()
         else:
-            # Patrullaje con detección de bordes
-            self.patrol(level)
+            # Patrulla sobre la plataforma fija
+            self.patrol()
 
-    def patrol(self, level):
-        """Se mueve de izquierda a derecha y gira al llegar a un borde."""
-        on_left, on_right = self.check_platform_edges(level)
-
-        # Si va a la izquierda y no hay suelo bajo el pie izquierdo → girar
-        if self.direction == -1 and not on_left:
+    def patrol(self):
+        """Patrulla izquierda-derecha sobre la plataforma fija."""
+        # Girar si llega al borde de la plataforma
+        if self.rect.left <= self.platform.left:
+            self.rect.left = self.platform.left
             self.direction = 1
-        # Si va a la derecha y no hay suelo bajo el pie derecho → girar
-        elif self.direction == 1 and not on_right:
+        elif self.rect.right >= self.platform.right:
+            self.rect.right = self.platform.right
             self.direction = -1
 
         # Movimiento horizontal
         self.rect.x += self.speed * self.direction
-
-        # Evitar salirse de los límites del mapa
-        if self.rect.left < 40:
-            self.rect.left = 40
-            self.direction = 1
-        elif self.rect.right > level.level_width - 40:
-            self.rect.right = level.level_width - 40
-            self.direction = -1
 
     def shoot(self):
         now = time.time()
