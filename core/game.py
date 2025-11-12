@@ -3,6 +3,7 @@ from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
 from core.level import Level
 from core.camera import Camera
+from entities.guardia1 import Guardia1
 
 class Game:
     def __init__(self):
@@ -21,6 +22,13 @@ class Game:
         # Dimensiones del nivel
         self.level_width = 1000
         self.level_height = 600
+
+        #Enemigos
+        import random
+        platform = random.choice(self.level.platforms[4:])  # evita paredes y suelo
+        x = random.randint(platform.left + 20, platform.right - 70)
+        y = platform.top - 70
+        self.enemy = Guardia1(x, y, self.level)
 
         # Cámara (aunque estática)
         self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
@@ -62,6 +70,9 @@ class Game:
                     # Rebote hacia atrás o pequeño impulso
                     self.player.rect.y -= 20
                 break
+        self.enemy.update(self.player, self.level)
+        self.enemy.draw(self.screen)
+
 
     def draw_lives(self):
         mask_size = 25
@@ -103,6 +114,9 @@ class Game:
 
         # Dibujar jugador + espada (usa su método propio)
         self.player.draw(self.screen)
+
+        # Dibujar Enemigo + espada
+        self.enemy.draw(self.screen)
 
         # HUD de vidas
         self.draw_lives()
