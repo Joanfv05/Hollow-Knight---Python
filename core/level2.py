@@ -3,50 +3,56 @@ from settings import WIDTH, HEIGHT
 
 class Level2:
     def __init__(self):
+        # --- PLATAFORMAS ---
         self.platforms = []
-        self.spikes = []
 
-        # === PLATAFORMAS DEL NIVEL 2 ===
-        platform_data = [
-            (0, 0, 40, 540),    # pared izquierda
-            (920, 0, 40, 540),  # pared derecha
-            (0, 0, 960, 40),    # techo
-            (0, 500, 960, 40),  # suelo
-            (100, 400, 200, 20),
-            (400, 300, 150, 20),
-            (650, 200, 200, 20),
-        ]
-        for x, y, w, h in platform_data:
-            self.platforms.append(pygame.Rect(x, y, w, h))
+        # Paredes y techo/suelo
+        self.platforms.append(pygame.Rect(0, 0, 40, HEIGHT))        # pared izquierda
+        self.platforms.append(pygame.Rect(WIDTH - 40, 0, 40, HEIGHT)) # pared derecha
+        self.platforms.append(pygame.Rect(0, 0, WIDTH, 40))         # techo
+        self.platforms.append(pygame.Rect(0, HEIGHT - 40, WIDTH, 40)) # suelo
 
-        # === PINCHOS DEL NIVEL 2 ===
-        spike_data = [
-            (200, 475, 40, 25),
-            (500, 475, 40, 25),
-        ]
-        for x, y, w, h in spike_data:
-            self.spikes.append(pygame.Rect(x, y, w, h))
+        # Plataformas jugables
+        self.platforms.append(pygame.Rect(50, 400, 200, 20))   # izquierda
+        self.platforms.append(pygame.Rect(710, 400, 200, 20))  # derecha
+        self.platforms.append(pygame.Rect(380, 470, 200, 30))  # columna baja central
 
-        # === SALIDA / PUERTA ===
-        self.exit_rect = pygame.Rect(920 - 40, 460, 40, 40)  # pared derecha abajo
+        # --- PINCHOS ---
+        self.spikes = []  # sin pinchos en este nivel
+
+        # --- SALIDA / PUERTA (desactivada por ahora) ---
+        self.exit_rect = pygame.Rect(WIDTH - 80, 400, 40, 40)  # dibujada pero no activa
+
+        # --- ENEMIGOS ---
+        self.enemies = pygame.sprite.Group()  # vacío por ahora
+
+        # --- COLUMNAS (height > 60) ---
+        self.columns = [p for p in self.platforms if p.height > 60]
+
+        # --- Dimensiones del nivel ---
+        self.level_width = WIDTH
+        self.level_height = HEIGHT
+
+        # Debug info
+        self.print_debug_info()
+
+    def print_debug_info(self):
+        print("=== PLATAFORMAS NIVEL 2 ===")
+        for i, p in enumerate(self.platforms):
+            print(f"{i}: x={p.x}, y={p.y}, w={p.width}, h={p.height}")
+        print("=== PUERTA NIVEL 2 (desactivada) ===")
+        print(f"exit: x={self.exit_rect.x}, y={self.exit_rect.y}, w={self.exit_rect.width}, h={self.exit_rect.height}")
 
     def draw(self, screen):
         screen.fill((25, 25, 35))
 
-        # Plataformas
+        # Dibujar plataformas
         for p in self.platforms:
-            color = (100, 70, 30) if p.height > 60 else (150, 90, 40)
+            color = (150, 90, 40) if p.height <= 60 else (100, 70, 30)
             pygame.draw.rect(screen, color, p)
             pygame.draw.rect(screen, (70, 45, 20), p.inflate(-4, -4))
 
-        # Pinchos
-        spike_color = (50, 50, 50)
-        for s in self.spikes:
-            pygame.draw.polygon(screen, spike_color, [
-                (s.left, s.bottom),
-                (s.centerx, s.top),
-                (s.right, s.bottom)
-            ])
+        # No hay pinchos en este nivel
 
-        # Puerta / salida (igual al fondo)
+        # Dibujar puerta (solo como referencia, no activa)
         pygame.draw.rect(screen, (25, 25, 35), self.exit_rect)

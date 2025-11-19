@@ -67,8 +67,9 @@ class Game:
                     self.player.rect.y -= 20
                 break
 
-        # Actualizar enemigo
-        self.enemy.update(self.player, self.level)
+       # Actualizar todos los enemigos del nivel actual
+        for enemy in self.level.enemies:
+            enemy.update(self.player, self.level)   
 
         # --- COLISIÓN CON SALIDA ---
         if self.player.rect.colliderect(self.level.exit_rect):
@@ -112,8 +113,9 @@ class Game:
         # Dibujar jugador
         self.player.draw(self.screen)
 
-        # Dibujar enemigo
-        self.enemy.draw(self.screen)
+        # Dibujar todos los enemigos
+        for enemy in self.level.enemies:
+            enemy.draw(self.screen)
 
         # HUD de vidas
         self.draw_lives()

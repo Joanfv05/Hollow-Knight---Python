@@ -1,10 +1,15 @@
 import pygame
 from settings import WIDTH, HEIGHT
+from entities.guardia1 import Guardia1
 
 class Level:
     def __init__(self):
         self.platforms = []
         self.spikes = []
+
+        # Enemigos de este nivel
+        self.enemies = pygame.sprite.Group()
+        self.enemies.add(Guardia1(self))
 
         # === PLATAFORMAS ===
         platform_data = [
