@@ -9,9 +9,9 @@ class Level2:
         self.platforms = []
 
         # Paredes y techo/suelo
-        self.platforms.append(pygame.Rect(0, 0, 40, HEIGHT))        # pared izquierda
+        self.platforms.append(pygame.Rect(0, 0, 40, HEIGHT))          # pared izquierda
         self.platforms.append(pygame.Rect(WIDTH - 40, 0, 40, HEIGHT)) # pared derecha
-        self.platforms.append(pygame.Rect(0, 0, WIDTH, 40))         # techo
+        self.platforms.append(pygame.Rect(0, 0, WIDTH, 40))           # techo
         self.platforms.append(pygame.Rect(0, HEIGHT - 40, WIDTH, 40)) # suelo
 
         # Plataformas jugables
@@ -22,10 +22,8 @@ class Level2:
         # --- PINCHOS ---
         self.spikes = []  # sin pinchos en este nivel
 
-        # Enemigos
-        self.enemies = pygame.sprite.Group()
-        # Crear volador
-        self.enemies.add(Volador(300, 200, self))
+        # --- ENEMIGOS ---
+        self.enemies = pygame.sprite.Group()  # los agregamos desde Game
 
         # --- COLUMNAS (height > 60) ---
         self.columns = [p for p in self.platforms if p.height > 60]
@@ -34,7 +32,7 @@ class Level2:
         self.level_width = WIDTH
         self.level_height = HEIGHT
 
-        # Debug info
+        # --- Debug info ---
         self.print_debug_info()
 
     def print_debug_info(self):
@@ -51,4 +49,6 @@ class Level2:
             pygame.draw.rect(screen, color, p)
             pygame.draw.rect(screen, (70, 45, 20), p.inflate(-4, -4))
 
-        # No hay pinchos ni puerta en este nivel
+        # Dibujar enemigos
+        for enemy in self.enemies:
+            enemy.draw(screen)

@@ -1,6 +1,7 @@
 import pygame
 import time
 
+
 GRAVITY = 0.6
 MAX_FALL_SPEED = 12
 
@@ -47,10 +48,10 @@ class Guardia1(pygame.sprite.Sprite):
         self.health = 5
         self.alive = True
 
-        # Dagas
+        # Proyectiles
         self.dagas = pygame.sprite.Group()
 
-        # Mapa
+        # Nivel
         self.level = level
 
         # Invencibilidad
@@ -58,10 +59,9 @@ class Guardia1(pygame.sprite.Sprite):
         self.invincible_time = 0.5
         self.last_hit_time = 0
 
-    # ----------------------------------------------------------
-    #                  FÍSICAS + COLISIONES
-    # ----------------------------------------------------------
-
+    # -------------------------------
+    # Física y colisiones
+    # -------------------------------
     def apply_gravity(self):
         self.vel_y += GRAVITY
         if self.vel_y > MAX_FALL_SPEED:
@@ -72,67 +72,43 @@ class Guardia1(pygame.sprite.Sprite):
     def collide_vertical(self):
         for plat in self.level.platforms:
             if self.rect.colliderect(plat):
-
-                if self.vel_y > 0:  # Cayendo
+                if self.vel_y > 0:  # cayendo
                     self.rect.bottom = plat.top
                     self.vel_y = 0
-
-                elif self.vel_y < 0:  # Subiendo
+                elif self.vel_y < 0:  # subiendo
                     self.rect.top = plat.bottom
                     self.vel_y = 0
 
     def move_x(self, amount):
         self.rect.x += amount
-
         for plat in self.level.platforms:
             if self.rect.colliderect(plat):
-
-                if amount > 0:  # hacia la derecha
+                if amount > 0:
                     self.rect.right = plat.left
-                else:  # izquierda
+                else:
                     self.rect.left = plat.right
 
-    # ----------------------------------------------------------
-    #                         PINCHOS
-    # ----------------------------------------------------------
-
-    def check_spikes(self):
-        for spike in self.level.spikes:
-            if self.rect.colliderect(spike):
-                print("⚠ Guardia ha tocado un pincho → Muerte instantánea")
-                self.health = 0
-                self.die()
-                return True
-        return False
-
-    # ----------------------------------------------------------
-    #                        IA BASICA
-    # ----------------------------------------------------------
-
+    # -------------------------------
+    # IA y comportamiento
+    # -------------------------------
     def patrol(self):
-        """Se mueve sobre LAS plataformas, sin caerse."""
-        # detectar si hay suelo bajo los pies
+        # Detectar suelo bajo los pies
         on_ground = False
+        ground_plat = None
         for plat in self.level.platforms:
-            if self.rect.bottom == plat.top and \
-               self.rect.centerx > plat.left and self.rect.centerx < plat.right:
+            if self.rect.bottom == plat.top and plat.left < self.rect.centerx < plat.right:
                 on_ground = True
                 ground_plat = plat
                 break
-
         if not on_ground:
-            # está en el aire → dejar que la gravedad actúe
             return
 
-        # si llega al borde derecho del suelo → girar
+        # Girar en los bordes
         if self.rect.right >= ground_plat.right:
             self.direction = -1
-
-        # si llega al borde izquierdo del suelo → girar
-        if self.rect.left <= ground_plat.left:
+        elif self.rect.left <= ground_plat.left:
             self.direction = 1
 
-        # moverse
         self.move_x(self.speed * self.direction)
 
     def shoot(self):
@@ -143,20 +119,16 @@ class Guardia1(pygame.sprite.Sprite):
             self.dagas.add(Daga(daga_x, daga_y, self.direction))
             self.last_shot = now
 
-    # ----------------------------------------------------------
-    #                          DAÑO
-    # ----------------------------------------------------------
-
+    # -------------------------------
+    # Daño y muerte
+    # -------------------------------
     def take_damage(self, knockback_dir=0):
         now = time.time()
         if not self.invincible:
             self.health -= 1
-            print(f"Guardia dañado. Vida: {self.health}")
-
             self.invincible = True
             self.last_hit_time = now
 
-            # Empuje sin atravesar paredes
             if knockback_dir != 0:
                 self.move_x(20 * knockback_dir)
 
@@ -167,70 +139,61 @@ class Guardia1(pygame.sprite.Sprite):
         if self.invincible and time.time() - self.last_hit_time >= self.invincible_time:
             self.invincible = False
 
-    # ----------------------------------------------------------
-    #                        UPDATE GENERAL
-    # ----------------------------------------------------------
+    def die(self):
+        self.alive = False
+        self.image.fill((60, 60, 60))
 
-    def update(self, player, level):
-
+    # -------------------------------
+    # Update general
+    # -------------------------------
+    def update(self, player):
         if not self.alive:
-            return
-
-        # MUERTO POR PINCHOS
-        if self.check_spikes():
             return
 
         # IA
         distance = abs(player.rect.centerx - self.rect.centerx)
         same_height = abs(player.rect.bottom - self.rect.bottom) < 80
-
         if distance < self.detection_range and same_height:
             self.direction = 1 if player.rect.centerx > self.rect.centerx else -1
             self.shoot()
         else:
             self.patrol()
 
-        # Gravedad
+        # Física
         self.apply_gravity()
 
         # Dagas
-        self.dagas.update(level)
+        self.dagas.update(self.level)
 
-        # ----------------------------------------------------------
-        #        COLISIONES CON EL JUGADOR
-        # ----------------------------------------------------------
-
-        # Daga → jugador
+        # Colisiones con jugador
         for daga in list(self.dagas):
-            if player.rect.colliderect(daga.rect):
-                if not player.invincible:
-                    player.take_damage()
+            if player.rect.colliderect(daga.rect) and not player.invincible:
+                player.take_damage()
                 daga.kill()
 
-        # Cuerpo → jugador
         if self.rect.colliderect(player.rect):
             direction = -1 if player.rect.centerx < self.rect.centerx else 1
             player.rect.x += 20 * direction
             player.take_damage()
 
-        # Espada jugador → guardia
+        # Espada del jugador
         if player.attacking and player.sword_rect.colliderect(self.rect):
             kb = 1 if player.facing == "right" else -1
             self.take_damage(knockback_dir=kb)
 
-        # Invencibilidad
         self.update_invincibility()
 
-    # ----------------------------------------------------------
-    #                          DIBUJO
-    # ----------------------------------------------------------
-
-    def die(self):
-        self.alive = False
-        self.image.fill((60, 60, 60))
-
+    # -------------------------------
+    # Dibujo
+    # -------------------------------
     def draw(self, screen):
         if not self.alive:
             return
         screen.blit(self.image, self.rect)
         self.dagas.draw(screen)
+        if self.invincible:
+            # Parpadeo al recibir daño
+            if int(time.time() * 10) % 2 == 0:
+                overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+                overlay.fill((255, 255, 255, 100))
+                screen.blit(overlay, self.rect.topleft)

@@ -7,37 +7,33 @@ from core.camera import Camera
 from entities.guardia1 import Guardia1
 from entities.mosca1 import Volador
 
-
 class Game:
     def __init__(self):
         pygame.font.init()
-
-        # Ventana
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
 
+        # Jugador
+        start_x = 100
+        start_y = HEIGHT-100
+        self.player = Player(start_x, start_y)
+        self.all_sprites = pygame.sprite.Group(self.player)
+
         # Nivel inicial
         self.level = Level()
         self.platforms = self.level.platforms
 
-        # Dimensiones del nivel
-        self.level_width = WIDTH
-        self.level_height = HEIGHT
-
-        # Enemigo inicial
-        self.enemy = Guardia1(self.level)
-        self.level.enemies = pygame.sprite.Group(self.enemy)
+        # Enemigos
+        self.level.enemies = pygame.sprite.Group(Guardia1(self.level))
 
         # Cámara
-        self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
+        self.camera = Camera(WIDTH, HEIGHT, WIDTH, HEIGHT)
 
-        # Jugador
-        start_x = 100
-        start_y = self.level_height - 100
-        self.player = Player(start_x, start_y)
-        self.all_sprites = pygame.sprite.Group(self.player)
+        # Spawn Volador
+        self.volador_spawn_time = None
+        self.volador_spawn_delay = 5
 
     def run(self):
         while self.running:
@@ -69,72 +65,58 @@ class Game:
                     self.player.rect.y -= 20
                 break
 
-        # Actualizar todos los enemigos del nivel actual
+        # --- Actualizar todos los enemigos ---
         for enemy in getattr(self.level, "enemies", []):
-            if isinstance(enemy, Guardia1):
-                enemy.update(self.player, self.level)
-            else:
-                enemy.update(self.player)
+            # Todos los enemigos deben recibir al jugador
+            enemy.update(self.player)
 
-        # Colisión con salida (solo si existe)
+        # --- Spawn del Volador si estamos en nivel 2 ---
+        if isinstance(self.level, Level2):
+            self.spawn_volador()
+
+        # Colisión con salida
         if hasattr(self.level, "exit_rect"):
             if self.player.rect.colliderect(self.level.exit_rect):
                 print("¡Nivel completado! Cargando Nivel 2...")
-                self.level = Level2()
-                self.platforms = self.level.platforms
-                self.player.rect.topleft = (100, HEIGHT - 100)
-                # Si hay enemigos en el nivel 2, agregarlos a `self.level.enemies`
-                if not hasattr(self.level, "enemies"):
-                    self.level.enemies = pygame.sprite.Group()
+                self.load_level2()
+
+    def load_level2(self):
+        self.level = Level2()
+        self.platforms = self.level.platforms
+        self.player.rect.topleft = (100, HEIGHT-100)
+        self.level.enemies = pygame.sprite.Group()
+        self.volador_spawn_time = pygame.time.get_ticks()
+
+    def spawn_volador(self):
+        if self.volador_spawn_time is None:
+            return
+        elapsed = (pygame.time.get_ticks() - self.volador_spawn_time)/1000
+        if elapsed >= self.volador_spawn_delay:
+            self.level.enemies.add(Volador(300, 200, self.level, self.player))
+            self.volador_spawn_time = None
 
     def draw_lives(self):
         mask_size = 25
         padding = 10
         x_start = 15
         y_start = 7
-
         for i in range(self.player.max_lives):
-            x = x_start + i * (mask_size + padding)
-            color = (255, 0, 0) if i < self.player.lives else (70, 70, 70)
-
-            center_left = (x + mask_size * 0.3, y_start + mask_size * 0.35)
-            center_right = (x + mask_size * 0.7, y_start + mask_size * 0.35)
-            radius = mask_size * 0.3
-
-            pygame.draw.circle(self.screen, color, center_left, radius)
-            pygame.draw.circle(self.screen, color, center_right, radius)
-
-            points = [
-                (x, y_start + mask_size * 0.4),
-                (x + mask_size, y_start + mask_size * 0.4),
-                (x + mask_size / 2, y_start + mask_size),
-            ]
+            x = x_start + i*(mask_size+padding)
+            color = (255,0,0) if i<self.player.lives else (70,70,70)
+            pygame.draw.circle(self.screen, color, (x+mask_size*0.3, y_start+mask_size*0.35), mask_size*0.3)
+            pygame.draw.circle(self.screen, color, (x+mask_size*0.7, y_start+mask_size*0.35), mask_size*0.3)
+            points = [(x, y_start+mask_size*0.4),(x+mask_size, y_start+mask_size*0.4),(x+mask_size/2,y_start+mask_size)]
             pygame.draw.polygon(self.screen, color, points)
 
     def draw(self):
-        self.screen.fill((25, 25, 35))
-
-        # Dibujar nivel
+        self.screen.fill((25,25,35))
         self.level.draw(self.screen)
-
-        # Dibujar jugador
         self.player.draw(self.screen)
-
-        # Dibujar todos los enemigos
         for enemy in getattr(self.level, "enemies", []):
             enemy.draw(self.screen)
-
-        # HUD de vidas
         self.draw_lives()
-
-        # Game Over
         if not self.player.alive:
-            font = pygame.font.SysFont(None, 72)
-            text = font.render("GAME OVER", True, (255, 0, 0))
-            rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-            self.screen.blit(text, rect)
-
+            font = pygame.font.SysFont(None,72)
+            text = font.render("GAME OVER", True, (255,0,0))
+            self.screen.blit(text, text.get_rect(center=(WIDTH//2, HEIGHT//2)))
         pygame.display.flip()
-
-
-__all__ = ["Game"]
