@@ -2,9 +2,10 @@ import pygame
 from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
 from core.level import Level
+from core.level2 import Level2
 from core.camera import Camera
 from entities.guardia1 import Guardia1
-from core.level2 import Level2
+from entities.mosca1 import Volador
 
 
 class Game:
@@ -17,7 +18,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        # Nivel
+        # Nivel inicial
         self.level = Level()
         self.platforms = self.level.platforms
 
@@ -25,10 +26,11 @@ class Game:
         self.level_width = WIDTH
         self.level_height = HEIGHT
 
-        # Enemigo: Guardia1 sobre plataforma fija
+        # Enemigo inicial
         self.enemy = Guardia1(self.level)
+        self.level.enemies = pygame.sprite.Group(self.enemy)
 
-        # Cámara (aunque estática)
+        # Cámara
         self.camera = Camera(WIDTH, HEIGHT, self.level_width, self.level_height)
 
         # Jugador
@@ -59,26 +61,31 @@ class Game:
         self.player.update(self.platforms, [])
         self.camera.update(self.player)
 
-        # Colisión con pinchos (respeta inmunidad)
-        for spike in self.level.spikes:
+        # Colisión con pinchos
+        for spike in getattr(self.level, "spikes", []):
             if self.player.rect.colliderect(spike):
                 if not self.player.invincible:
                     self.player.take_damage()
                     self.player.rect.y -= 20
                 break
 
-       # Actualizar todos los enemigos del nivel actual
-        for enemy in self.level.enemies:
-            enemy.update(self.player, self.level)   
+        # Actualizar todos los enemigos del nivel actual
+        for enemy in getattr(self.level, "enemies", []):
+            if isinstance(enemy, Guardia1):
+                enemy.update(self.player, self.level)
+            else:
+                enemy.update(self.player)
 
-        # --- COLISIÓN CON SALIDA ---
+        # Colisión con salida (solo si existe)
         if hasattr(self.level, "exit_rect"):
             if self.player.rect.colliderect(self.level.exit_rect):
                 print("¡Nivel completado! Cargando Nivel 2...")
                 self.level = Level2()
                 self.platforms = self.level.platforms
-                # Reposicionar jugador al inicio del nuevo nivel
                 self.player.rect.topleft = (100, HEIGHT - 100)
+                # Si hay enemigos en el nivel 2, agregarlos a `self.level.enemies`
+                if not hasattr(self.level, "enemies"):
+                    self.level.enemies = pygame.sprite.Group()
 
     def draw_lives(self):
         mask_size = 25
@@ -114,7 +121,7 @@ class Game:
         self.player.draw(self.screen)
 
         # Dibujar todos los enemigos
-        for enemy in self.level.enemies:
+        for enemy in getattr(self.level, "enemies", []):
             enemy.draw(self.screen)
 
         # HUD de vidas

@@ -1,5 +1,7 @@
 import pygame
 from settings import WIDTH, HEIGHT
+from entities.mosca1 import Volador
+
 
 class Level2:
     def __init__(self):
@@ -20,8 +22,10 @@ class Level2:
         # --- PINCHOS ---
         self.spikes = []  # sin pinchos en este nivel
 
-        # --- ENEMIGOS ---
-        self.enemies = pygame.sprite.Group()  # vacío por ahora
+        # Enemigos
+        self.enemies = pygame.sprite.Group()
+        # Crear volador
+        self.enemies.add(Volador(300, 200, self))
 
         # --- COLUMNAS (height > 60) ---
         self.columns = [p for p in self.platforms if p.height > 60]
