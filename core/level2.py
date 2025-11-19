@@ -13,8 +13,8 @@ class Level2:
         self.platforms.append(pygame.Rect(0, HEIGHT - 40, WIDTH, 40)) # suelo
 
         # Plataformas jugables
-        self.platforms.append(pygame.Rect(50, 400, 200, 20))   # izquierda
-        self.platforms.append(pygame.Rect(710, 400, 200, 20))  # derecha
+        self.platforms.append(pygame.Rect(90, 345, 200, 20))   # izquierda
+        self.platforms.append(pygame.Rect(670, 345, 200, 20))  # derecha
         self.platforms.append(pygame.Rect(380, 470, 200, 30))  # columna baja central
 
         # --- PINCHOS ---
