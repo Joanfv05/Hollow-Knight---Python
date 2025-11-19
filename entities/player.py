@@ -39,7 +39,7 @@ class Player(pygame.sprite.Sprite):
         self.sword_angle = 0
 
         # Vidas e invincibilidad
-        self.max_lives = 5
+        self.max_lives = 500
         self.lives = self.max_lives
         self.invincible = False
         self.invincible_time = 1
