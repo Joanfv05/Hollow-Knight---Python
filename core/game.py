@@ -3,7 +3,9 @@ from settings import WIDTH, HEIGHT, FPS, TITLE
 from entities.player import Player
 from core.level import Level
 from core.camera import Camera
-from entities.guardia1 import Guardia1  # clase actualizada
+from entities.guardia1 import Guardia1
+from core.level2 import Level2
+
 
 class Game:
     def __init__(self):
@@ -67,6 +69,15 @@ class Game:
 
         # Actualizar enemigo
         self.enemy.update(self.player, self.level)
+
+        # --- COLISIÓN CON SALIDA ---
+        if self.player.rect.colliderect(self.level.exit_rect):
+            print("¡Nivel completado! Cargando Nivel 2...")
+            self.level = Level2()
+            self.platforms = self.level.platforms
+            # Reposicionar jugador al inicio del nuevo nivel
+            self.player.rect.topleft = (100, HEIGHT - 100)
+
 
     def draw_lives(self):
         mask_size = 25
