@@ -72,13 +72,13 @@ class Game:
             enemy.update(self.player, self.level)   
 
         # --- COLISIÓN CON SALIDA ---
-        if self.player.rect.colliderect(self.level.exit_rect):
-            print("¡Nivel completado! Cargando Nivel 2...")
-            self.level = Level2()
-            self.platforms = self.level.platforms
-            # Reposicionar jugador al inicio del nuevo nivel
-            self.player.rect.topleft = (100, HEIGHT - 100)
-
+        if hasattr(self.level, "exit_rect"):
+            if self.player.rect.colliderect(self.level.exit_rect):
+                print("¡Nivel completado! Cargando Nivel 2...")
+                self.level = Level2()
+                self.platforms = self.level.platforms
+                # Reposicionar jugador al inicio del nuevo nivel
+                self.player.rect.topleft = (100, HEIGHT - 100)
 
     def draw_lives(self):
         mask_size = 25
